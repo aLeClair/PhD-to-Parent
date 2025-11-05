@@ -26,9 +26,8 @@ if prompt := st.chat_input("Ask a question about the research"):
 
     with st.chat_message("assistant"):
         with st.spinner("The AI is thinking..."):
-            # This is the new way to call the chain
-            response = qa_chain.invoke({"input": prompt})
-            # The answer is now in a key called "answer"
-            st.markdown(response["answer"])
+            response = qa_chain.invoke(prompt)
+            # The answer is in a key called "result" for this chain
+            st.markdown(response["result"])
 
-    st.session_state.messages.append({"role": "assistant", "content": response["answer"]})
+    st.session_state.messages.append({"role": "assistant", "content": response["result"]})

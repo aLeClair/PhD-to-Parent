@@ -5,12 +5,25 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.chains import create_stuff_documents_chain, create_retrieval_chain
+from langchain.chains import RetrievalQA
 from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import PromptTemplate
 import config
 
 FAISS_INDEX_PATH = "faiss_index"
+
+# This prompt combines the persona and the instructions into one template
+PROMPT_TEMPLATE = config.SYSTEM_PROMPT + """
+
+CONTEXT:
+{context}
+
+QUESTION:
+{question}
+
+ANSWER:
+"""
+
 
 def load_and_build_index():
     if os.path.exists(FAISS_INDEX_PATH):
@@ -32,16 +45,16 @@ def load_and_build_index():
         vector_store.save_local(FAISS_INDEX_PATH)
         return vector_store
 
+
 def get_qa_chain():
     vector_store = load_and_build_index()
-    retriever = vector_store.as_retriever()
-    llm = ChatGroq(model_name="llama-3.1-8b-instant", groq_api_key=config.GROQ_API_KEY)
-    system_prompt = config.SYSTEM_PROMPT
-    human_prompt = config.HUMAN_PROMPT_TEMPLATE
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        ("human", human_prompt),
-    ])
-    question_answer_chain = create_stuff_documents_chain(llm, prompt)
-    qa_chain = create_retrieval_chain(retriever, question_answer_chain)
+    llm = ChatGroq(model_name="llama3-8b-8192", groq_api_key=config.GROQ_API_KEY)
+
+    prompt = PromptTemplate(template=PROMPT_TEMPLATE, input_variables=["context", "question"])
+
+    qa_chain = RetrievalQA.from_chain_type(
+        llm,
+        retriever=vector_store.as_retriever(),
+        chain_type_kwargs={"prompt": prompt}
+    )
     return qa_chain

@@ -25,19 +25,6 @@ except (FileNotFoundError, KeyError):
 
 FAISS_INDEX_PATH = "faiss_index"
 
-# This prompt combines the persona and the instructions into one template
-PROMPT_TEMPLATE = SYSTEM_PROMPT + """
-
-CONTEXT:
-{context}
-
-QUESTION:
-{question}
-
-ANSWER:
-"""
-
-
 def load_and_build_index():
     if os.path.exists(FAISS_INDEX_PATH):
         embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -62,14 +49,25 @@ def load_and_build_index():
 
 def get_qa_chain():
     vector_store = load_and_build_index()
-    llm = ChatGroq(model_name="llama-3.1-8b-instant", groq_api_key=GROQ_API_KEY)
+    llm = ChatGroq(model_name="llama-3.1-8b-instant",
+                   groq_api_key=GROQ_API_KEY)
 
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True, output_key='answer')
 
     condense_question_prompt_text = "Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.\n\nChat History:\n{chat_history}\nFollow Up Input: {question}\nStandalone question:"
     CONDENSE_QUESTION_PROMPT = PromptTemplate.from_template(condense_question_prompt_text)
 
-    qa_prompt = PromptTemplate(template=PROMPT_TEMPLATE, input_variables=["context", "question"])
+    qa_prompt_template = SYSTEM_PROMPT + """
+
+    CONTEXT:
+    {context}
+
+    QUESTION:
+    {question}
+
+    ANSWER:
+    """
+    qa_prompt = PromptTemplate(template=qa_prompt_template, input_variables=["context", "question"])
 
     qa_chain = ConversationalRetrievalChain.from_llm(
         llm,

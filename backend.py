@@ -5,13 +5,11 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains import create_retrieval_chain
 from langchain_groq import ChatGroq
-from langchain_core.prompts import (
-    SystemMessagePromptTemplate,
-    HumanMessagePromptTemplate,
-    ChatPromptTemplate,
-)
+from langchain_core.prompts import ChatPromptTemplate
+
 import config  # Import our new config file
 
 FAISS_INDEX_PATH = "faiss_index"
@@ -47,16 +45,18 @@ def get_qa_chain():
     Initializes and returns the RAG chain.
     """
     vector_store = load_and_build_index()
-
-    system_message_prompt = SystemMessagePromptTemplate.from_template(config.SYSTEM_PROMPT)
-    human_message_prompt = HumanMessagePromptTemplate.from_template(config.HUMAN_PROMPT_TEMPLATE)
-    chat_prompt = ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
+    retriever = vector_store.as_retriever()
 
     llm = ChatGroq(model_name="llama-3.1-8b-instant", groq_api_key=config.GROQ_API_KEY)
 
-    qa_chain = RetrievalQA.from_chain_type(
-        llm,
-        retriever=vector_store.as_retriever(),
-        chain_type_kwargs={"prompt": chat_prompt}
-    )
+    system_prompt = config.SYSTEM_PROMPT
+    human_prompt = config.HUMAN_PROMPT_TEMPLATE
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", system_prompt),
+        ("human", human_prompt),
+    ])
+
+    question_answer_chain = create_stuff_documents_chain(llm, prompt)
+    qa_chain = create_retrieval_chain(retriever, question_answer_chain)
+
     return qa_chain

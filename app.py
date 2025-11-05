@@ -7,13 +7,11 @@ from langchain_core.messages import HumanMessage, AIMessage
 st.title("PhD to Parent")
 # --- Initialize Session State and Add the Greeting Message ---
 if "chat_history" not in st.session_state:
-    # This is the one-time greeting that sets the context.
-    welcome_message = (
-        "Hello! I'm an AI assistant who has read all of Andrew's research. "
+    st.session_state.chat_history = [
+        AIMessage(content="Hello! I'm an AI assistant who has read all of Andrew's research. "
         "My purpose is to help you understand his work. Think of me as a friendly translator for his complex ideas. "
-        "Please feel free to ask me anything, like 'What does he do?' or 'What is an ontology?'!"
-    )
-    st.session_state.messages = [{"role": "assistant", "content": welcome_message}]
+        "Please feel free to ask me anything, like 'What does he do?' or 'What is an ontology?'!")
+        ]
 
 # Load the RAG chain
 try:

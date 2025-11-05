@@ -10,11 +10,12 @@ from langchain.chains import RetrievalQA
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 
-
+GROQ_API_KEY = None
+SYSTEM_PROMPT = None
 try:
     # Running on Streamlit Cloud
-    GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
-    SYSTEM_PROMPT = st.secrets["SYSTEM_PROMPT"]
+    GROQ_API_KEY = str(st.secrets["GROQ_API_KEY"])
+    SYSTEM_PROMPT = str(st.secrets["SYSTEM_PROMPT"])
 except (FileNotFoundError, KeyError):
     # Running locally, load from config.py
     import config

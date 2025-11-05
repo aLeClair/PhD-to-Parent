@@ -1,6 +1,7 @@
 # backend.py
 
 import os
+import streamlit as st
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
@@ -8,7 +9,18 @@ from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
-import config
+
+
+try:
+    # Running on Streamlit Cloud
+    GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+    SYSTEM_PROMPT = st.secrets["SYSTEM_PROMPT"]
+except (FileNotFoundError, KeyError):
+    # Running locally, load from config.py
+    import config
+    GROQ_API_KEY = config.GROQ_API_KEY
+    SYSTEM_PROMPT = config.SYSTEM_PROMPT
+
 
 FAISS_INDEX_PATH = "faiss_index"
 

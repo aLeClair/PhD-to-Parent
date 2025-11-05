@@ -37,7 +37,7 @@ def load_and_build_index():
                     file_path)
                 pages = loader.load()
                 all_pages.extend(pages)
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=200)
         texts = text_splitter.split_documents(all_pages)
         embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
         vector_store = FAISS.from_documents(texts, embeddings)
@@ -47,8 +47,8 @@ def load_and_build_index():
 
 def get_qa_chain():
     vector_store = load_and_build_index()
-    retriever = vector_store.as_retriever()
-    llm = ChatGroq(model_name="llama-3.1-8b-instant", groq_api_key=GROQ_API_KEY)
+    retriever = vector_store.as_retriever(search_kwargs={"k": 5})
+    llm = ChatGroq(model_name="llama-3.1-8b-instant", groq_api_key=GROQ_API_KEY, temperature=0.3)
 
     contextualize_q_system_prompt = """Given a chat history and the latest user question \
        which might reference context in the chat history, formulate a standalone question \
@@ -57,6 +57,7 @@ def get_qa_chain():
     contextualize_q_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", contextualize_q_system_prompt),
+            ("placeholder", "{chat_history}"),
             ("human", "{input}"),
         ]
     )
@@ -66,6 +67,7 @@ def get_qa_chain():
     qa_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", qa_system_prompt),
+            ("placeholder", "{chat_history}"),
             ("human", "{input}"),
         ]
     )

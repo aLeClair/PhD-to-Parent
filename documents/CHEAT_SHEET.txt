@@ -1,0 +1,48 @@
+[IDENTITY]
+The researcher's full name is Andrew LeClair. In all responses, refer to him as "Andrew" or "your son".
+He completed his PhD at McMaster University.
+The foundational work is his PhD thesis. His industry roles at Bosch and GENAIZ are practical applications of the theories from his thesis.
+
+[PREFERRED ANALOGIES]
+- An ontology is like a detailed "family tree for ideas." It doesn't just list ideas; it shows how they are related to each other.
+- Andrew's work is like being a "librarian for AI." He doesn't just collect information; he creates a perfect, logical system so the AI can find the exact right fact and understand its context.
+
+[PROJECT SUMMARIES - PLAIN ENGLISH]
+
+PROJECT: PhD Thesis
+- THE PROBLEM: Computers are good at storing data but bad at understanding the relationships and context between different pieces of information. This makes it hard for AI to reason in a human-like way.
+- WHAT ANDREW DID: He developed new mathematical and logical methods to break down large, complex knowledge systems ("ontologies") into smaller, more manageable pieces. He created rules to ensure that no important knowledge was lost in this process.
+- THE RESULT: This makes it possible to build more efficient and reliable AI systems that can work with huge amounts of information without getting confused.
+
+PROJECT: Robert Bosch Inc.
+- THE PROBLEM: In a factory, small glitches can lead to huge, expensive shutdowns, but it's hard to see the pattern of which glitches are the dangerous ones.
+- WHAT ANDREW DID: He used the ideas from his thesis to build a system that could understand the relationships between thousands of tiny sensor readings over time. This system could then predict if a series of small glitches was going to lead to a big shutdown.
+- THE RESULT: This tool helped the company identify critical problems before they happened, saving a significant amount of money and preventing production line interruptions.
+
+PROJECT: GENAIZ
+- THE PROBLEM: [Describe the problem in simple terms, e.g., "Clinical trials are slow and have many different types of data that are hard to connect."]
+- WHAT ANDREW DID: [Describe your actions in simple terms, e.g., "He built an 'AI librarian' that automatically organizes all the different data, checks it for consistency, and helps scientists find connections between different experiments faster."]
+- THE RESULT: [Describe the outcome in simple terms, e.g., "This helps speed up research and makes it easier for scientists to make new discoveries."]
+
+[ADVANCED CONCEPTS: THE POWER OF CONNECTING KNOWLEDGE]
+
+CONCEPT: Synthesizing Different Domains (The "Whole Patient" Idea)
+- Andrew's work is powerful because it can connect knowledge from many different experts to see a single problem from all sides.
+- For example, in medicine, a doctor knows about diseases, a pharmacist knows about drugs, and a social scientist might know that the patient's commute makes it hard to get to the pharmacy. Andrew builds systems that can hold all this different expert knowledge at once. It helps the AI see the "whole patient" by connecting the medical, pharmaceutical, and social factors together to find the best solution.
+
+CONCEPT: Representing Different Perspectives (The "Wine" Idea)
+- An ontology can understand that the same thing can be viewed in different ways.
+- For example, a farmer knows how to grow grapes (the soil, the water, the sun). A sommelier knows how to taste the wine made from those grapes (the aroma, the flavor, the history). Andrew's work creates a structure where the AI can understand both the farmer's perspective and the sommelier's perspective on the same bottle of wine.
+
+CONCEPT: Using Math to Represent Ideas (The "Algebra for Ideas" Idea)
+- The core of Andrew's work involves using advanced math, like algebra, to create rules for ideas.
+- Just like algebra in high school uses symbols (like 'x' and 'y') and rules to solve problems with numbers, Andrew's research creates a kind of "algebra for ideas." It uses formal symbols and logical rules to teach a computer how the concepts of 'family', 'work', and 'location' are all related to a 'person'. This mathematical foundation is what makes the AI's reasoning precise and reliable.
+
+
+[FAQs]
+
+QUESTION: Is Andrew's work like ChatGPT?
+ANSWER: That's a great question! It's more like Andrew's work is a crucial partner *to* things like ChatGPT. While ChatGPT is great at talking, Andrew's research focuses on building the "book of facts" that ensures the chatbot has reliable, truthful information to talk about. He builds the knowledge; the chatbot provides the voice.
+
+QUESTION: What does Andrew do all day?
+ANSWER: Andrew spends his time acting like a translator between human knowledge and computer understanding. He takes complex ideas from experts and turns them into a structured, logical map (an ontology) that a computer can follow. This involves a mix of deep thinking, logic, mathematics, and computer programming.

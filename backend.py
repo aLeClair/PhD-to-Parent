@@ -2,7 +2,7 @@
 
 import os
 import streamlit as st
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
@@ -47,11 +47,16 @@ def load_and_build_index():
         docs_path = os.path.join(os.path.dirname(__file__), 'documents')
         all_pages = []
         for filename in os.listdir(docs_path):
+            file_path = os.path.join(docs_path, filename)
             if filename.endswith('.pdf'):
-                file_path = os.path.join(docs_path, filename)
                 loader = PyPDFLoader(file_path)
                 pages = loader.load()
                 all_pages.extend(pages)
+            elif filename.endswith('.txt'):
+                loader = TextLoader(file_path)
+                pages = loader.load()
+                all_pages.extend(pages)
+
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
         texts = text_splitter.split_documents(all_pages)
         embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -70,13 +75,23 @@ def get_qa_chain():
         output_key='answer'  # Specify the key for the AI's response
     )
 
-    prompt = PromptTemplate(template=PROMPT_TEMPLATE, input_variables=["context", "question"])
+    condense_question_prompt_text = """Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.
+
+    Chat History:
+    {chat_history}
+    Follow Up Input: {question}
+    Standalone question:"""
+
+    CONDENSE_QUESTION_PROMPT = PromptTemplate.from_template(condense_question_prompt_text)
+
+    qa_prompt = PromptTemplate(template=PROMPT_TEMPLATE, input_variables=["context", "question"])
 
     qa_chain = ConversationalRetrievalChain.from_llm(
         llm,
         retriever=vector_store.as_retriever(),
-        memory=memory,  # Plug in the memory
-        combine_docs_chain_kwargs={"prompt": prompt},  # Pass our custom prompt
-        output_key='answer'  # Ensure the output key is consistent
+        memory=memory,
+        condense_question_prompt=CONDENSE_QUESTION_PROMPT,  # <-- Pass the new prompt here
+        combine_docs_chain_kwargs={"prompt": qa_prompt},
+        output_key='answer'
     )
     return qa_chain

@@ -5,4 +5,4 @@ langchain-groq
 pypdf2
 sentence-transformers
 langchain-community
-langchain-text-splitter
+langchain-text-splitters

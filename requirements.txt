@@ -1,10 +1,10 @@
-streamlit==1.40.0
+streamlit
 langchain==0.2.10
 langchain-core==0.2.23
 langchain-community==0.2.10
 langchain-groq==0.1.6
 langchain-text-splitters==0.2.2
-faiss-cpu==1.8.0
-pypdf2==3.0.1
-sentence-transformers==3.0.1
-numpy==1.26.4
+pypdf2
+sentence-transformers
+faiss-cpu
+numpy

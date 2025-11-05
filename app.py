@@ -2,7 +2,7 @@ import streamlit as st
 from backend import get_qa_chain
 from langchain_core.messages import HumanMessage, AIMessage
 
-st.title("PhD to Parent 🎓")
+st.title("PhD to Parent")
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [

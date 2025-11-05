@@ -1,5 +1,6 @@
 streamlit
 langchain
+langchain-core
 faiss-cpu
 langchain-groq
 pypdf2

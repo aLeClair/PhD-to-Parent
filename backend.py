@@ -6,7 +6,8 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
+from langchain.chains import ConversationalRetrievalChain
+from langchain.memory import ConversationBufferMemory
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 
@@ -63,11 +64,19 @@ def get_qa_chain():
     vector_store = load_and_build_index()
     llm = ChatGroq(model_name="llama-3.1-8b-instant", groq_api_key=GROQ_API_KEY)
 
+    memory = ConversationBufferMemory(
+        memory_key="chat_history",
+        return_messages=True,
+        output_key='answer'  # Specify the key for the AI's response
+    )
+
     prompt = PromptTemplate(template=PROMPT_TEMPLATE, input_variables=["context", "question"])
 
-    qa_chain = RetrievalQA.from_chain_type(
+    qa_chain = ConversationalRetrievalChain.from_llm(
         llm,
         retriever=vector_store.as_retriever(),
-        chain_type_kwargs={"prompt": prompt}
+        memory=memory,  # Plug in the memory
+        combine_docs_chain_kwargs={"prompt": prompt},  # Pass our custom prompt
+        output_key='answer'  # Ensure the output key is consistent
     )
     return qa_chain

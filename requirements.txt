@@ -4,3 +4,4 @@ faiss-cpu
 langchain-groq
 pypdf2
 sentence-transformers
+langchain-community

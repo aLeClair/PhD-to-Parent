@@ -2,10 +2,11 @@
 
 import streamlit as st
 from backend import get_qa_chain
+from langchain_core.messages import HumanMessage, AIMessage
 
 st.title("PhD to Parent")
 # --- Initialize Session State and Add the Greeting Message ---
-if "messages" not in st.session_state:
+if "chat_history" not in st.session_state:
     # This is the one-time greeting that sets the context.
     welcome_message = (
         "Hello! I'm an AI assistant who has read all of Andrew's research. "
@@ -23,22 +24,30 @@ except Exception as e:
     st.stop()
 
 # Display the entire chat history from session state
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+for message in st.session_state.chat_history:
+    if isinstance(message, AIMessage):
+        with st.chat_message("assistant"):
+            st.markdown(message.content)
+    elif isinstance(message, HumanMessage):
+        with st.chat_message("user"):
+            st.markdown(message.content)
 
 # The Chat Input Box
 if prompt := st.chat_input("Ask a question about the research"):
-    # Add user message to session state
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    # Add user message to history
+    st.session_state.chat_history.append(HumanMessage(content=prompt))
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
     # Get the AI's response
-    with st.spinner("The AI is thinking..."):
-        response = qa_chain.invoke({
-            "question": prompt,
-            "chat_history": st.session_state.messages
-        })
-        # Add the AI's response to the session state
-        st.session_state.messages.append({"role": "assistant", "content": response["answer"]})
+    with st.chat_message("assistant"):
+        with st.spinner("The AI is thinking..."):
+            # Call the chain with the correct input structure
+            response = qa_chain.invoke({
+                "input": prompt,
+                "chat_history": st.session_state.chat_history
+            })
+            st.markdown(response["answer"])
 
-    st.rerun()
+    # Add AI response to history
+    st.session_state.chat_history.append(AIMessage(content=response["answer"]))

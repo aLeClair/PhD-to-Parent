@@ -6,20 +6,17 @@ from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.chains import ConversationalRetrievalChain
-from langchain.memory import ConversationBufferMemory
+from langchain.chains import create_history_aware_retriever, create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_groq import ChatGroq
-from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 
 # --- Environment-Aware Secret Loading ---
-GROQ_API_KEY = None
-SYSTEM_PROMPT = None
 try:
-    GROQ_API_KEY = str(st.secrets["GROQ_API_KEY"])
-    SYSTEM_PROMPT = str(st.secrets["SYSTEM_PROMPT"])
+    GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+    SYSTEM_PROMPT = st.secrets["SYSTEM_PROMPT"]
 except (FileNotFoundError, KeyError):
     import config
-
     GROQ_API_KEY = config.GROQ_API_KEY
     SYSTEM_PROMPT = config.SYSTEM_PROMPT
 
@@ -49,32 +46,31 @@ def load_and_build_index():
 
 def get_qa_chain():
     vector_store = load_and_build_index()
-    llm = ChatGroq(model_name="llama-3.1-8b-instant",
-                   groq_api_key=GROQ_API_KEY)
+    retriever = vector_store.as_retriever()
+    llm = ChatGroq(model_name="llama-3.1-8b-instant", groq_api_key=GROQ_API_KEY)
 
-    memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True, output_key='answer')
-
-    condense_question_prompt_text = "Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.\n\nChat History:\n{chat_history}\nFollow Up Input: {question}\nStandalone question:"
-    CONDENSE_QUESTION_PROMPT = PromptTemplate.from_template(condense_question_prompt_text)
-
-    qa_prompt_template = SYSTEM_PROMPT + """
-
-    CONTEXT:
-    {context}
-
-    QUESTION:
-    {question}
-
-    ANSWER:
-    """
-    qa_prompt = PromptTemplate(template=qa_prompt_template, input_variables=["context", "question"])
-
-    qa_chain = ConversationalRetrievalChain.from_llm(
-        llm,
-        retriever=vector_store.as_retriever(),
-        memory=memory,
-        condense_question_prompt=CONDENSE_QUESTION_PROMPT,
-        combine_docs_chain_kwargs={"prompt": qa_prompt},
-        output_key='answer'
+    contextualize_q_system_prompt = """Given a chat history and the latest user question \
+       which might reference context in the chat history, formulate a standalone question \
+       which can be understood without the chat history. Do NOT answer the question, \
+       just reformulate it if needed and otherwise return it as is."""
+    contextualize_q_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", contextualize_q_system_prompt),
+            ("human", "{input}"),
+        ]
     )
-    return qa_chain
+    history_aware_retriever = create_history_aware_retriever(llm, retriever, contextualize_q_prompt)
+
+    qa_system_prompt = SYSTEM_PROMPT + "\n\nCONTEXT:\n{context}"
+    qa_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", qa_system_prompt),
+            ("human", "{input}"),
+        ]
+    )
+
+    question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
+
+    rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
+
+    return rag_chain

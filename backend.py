@@ -48,7 +48,7 @@ def load_and_build_index():
 def get_qa_chain():
     vector_store = load_and_build_index()
     retriever = vector_store.as_retriever(search_kwargs={"k": 5})
-    llm = ChatGroq(model_name="llama-3.1-8b-instant", groq_api_key=GROQ_API_KEY, temperature=0.3)
+    llm = ChatGroq(model_name="llama-3.1-8b-instant", groq_api_key=GROQ_API_KEY)
 
     contextualize_q_system_prompt = """Given a chat history and the latest user question \
        which might reference context in the chat history, formulate a standalone question \

@@ -25,7 +25,7 @@ except (FileNotFoundError, KeyError):
 FAISS_INDEX_PATH = "faiss_index"
 
 # This prompt combines the persona and the instructions into one template
-PROMPT_TEMPLATE = config.SYSTEM_PROMPT + """
+PROMPT_TEMPLATE = SYSTEM_PROMPT + """
 
 CONTEXT:
 {context}
@@ -60,7 +60,7 @@ def load_and_build_index():
 
 def get_qa_chain():
     vector_store = load_and_build_index()
-    llm = ChatGroq(model_name="llama3-8b-8192", groq_api_key=config.GROQ_API_KEY)
+    llm = ChatGroq(model_name="llama3-8b-8192", groq_api_key=GROQ_API_KEY)
 
     prompt = PromptTemplate(template=PROMPT_TEMPLATE, input_variables=["context", "question"])
 

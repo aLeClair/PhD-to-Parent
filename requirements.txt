@@ -8,3 +8,4 @@ faiss-cpu
 pypdf2
 sentence-transformers
 numpy<2.0
+pydantic<2

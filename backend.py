@@ -62,7 +62,7 @@ def load_and_build_index():
 
 def get_qa_chain():
     vector_store = load_and_build_index()
-    llm = ChatGroq(model_name="llama3-8b-8192", groq_api_key=GROQ_API_KEY)
+    llm = ChatGroq(model_name="llama-3.1-8b-instant", groq_api_key=GROQ_API_KEY)
 
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True, output_key='answer')
 

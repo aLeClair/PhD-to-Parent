@@ -13,14 +13,10 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 
-GROQ_API_KEY = None
-SYSTEM_PROMPT = None
 try:
-    # Running on Streamlit Cloud
-    GROQ_API_KEY = str(st.secrets["GROQ_API_KEY"])
-    SYSTEM_PROMPT = str(st.secrets["SYSTEM_PROMPT"])
+    GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+    SYSTEM_PROMPT = st.secrets["SYSTEM_PROMPT"]
 except (FileNotFoundError, KeyError):
-    # Running locally, load from config.py
     import config
     GROQ_API_KEY = config.GROQ_API_KEY
     SYSTEM_PROMPT = config.SYSTEM_PROMPT
@@ -56,43 +52,29 @@ def load_and_build_index():
 
 
 def get_qa_chain():
+    # THIS IS THE MODERN, CORRECT WAY TO BUILD THE CHAIN.
     vector_store = load_and_build_index()
     retriever = vector_store.as_retriever()
     llm = ChatGroq(model_name="llama-3.1-8b-instant", groq_api_key=GROQ_API_KEY)
 
-    # 1. This is the prompt for the "history-aware" part of the chain.
-    # It turns the new question + old history into a single, standalone question.
     contextualize_q_system_prompt = """Given a chat history and the latest user question \
     which might reference context in the chat history, formulate a standalone question \
     which can be understood without the chat history. Do NOT answer the question, \
     just reformulate it if needed and otherwise return it as is."""
-    contextualize_q_prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", contextualize_q_system_prompt),
-            ("human", "{input}"),
-        ]
-    )
-    history_aware_retriever = create_history_aware_retriever(
-        llm, retriever, contextualize_q_prompt
-    )
+    contextualize_q_prompt = ChatPromptTemplate.from_messages([
+        ("system", contextualize_q_system_prompt),
+        ("human", "{input}"),
+    ])
+    history_aware_retriever = create_history_aware_retriever(llm, retriever, contextualize_q_prompt)
 
-    # 2. This is the main answering prompt, which now has access to the history.
-    qa_system_prompt = SYSTEM_PROMPT + """
+    qa_system_prompt = SYSTEM_PROMPT + "\n\nCONTEXT:\n{context}"
+    qa_prompt = ChatPromptTemplate.from_messages([
+        ("system", qa_system_prompt),
+        ("human", "{input}"),
+    ])
 
-    CONTEXT:
-    {context}
-    """
-    qa_prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", qa_system_prompt),
-            ("human", "{input}"),
-        ]
-    )
-
-    # This chain takes the question and the retrieved documents and generates the answer.
     question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
 
-    # 3. This is the final chain that ties it all together.
     rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
 
     return rag_chain

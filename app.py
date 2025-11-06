@@ -2,12 +2,12 @@ import streamlit as st
 from backend import get_qa_chain
 from langchain_core.messages import HumanMessage, AIMessage
 
-st.title("PhD to Parent")
+st.title("Ned's Research Sherpa")
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [
         AIMessage(
-            content="Hello! I'm an AI assistant who has read all of Andrew's research. My purpose is to help you understand his work. Think of me as a friendly translator for his complex ideas. Please feel free to ask me anything!")
+            content="Hey there! I'm Andrew's Research Sherpa - think of me as your guide through the sometimes-dense terrain of his PhD work. I've read all his papers so you don't have to, and I'm here to translate the academic jargon into plain English. What would you like to know?")
     ]
 
 try:

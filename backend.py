@@ -1,103 +1,79 @@
+# backend.py
+
 import os
-import pickle
 import streamlit as st
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from groq import Client
+from langchain.chains.history_aware_retriever import create_history_aware_retriever
+from langchain.chains.retrieval import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_groq import ChatGroq
+from langchain_core.prompts import ChatPromptTemplate
 
-# --- Environment-aware secret loading ---
+# --- Environment-Aware Secret Loading ---
 try:
     GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
     SYSTEM_PROMPT = st.secrets["SYSTEM_PROMPT"]
 except (FileNotFoundError, KeyError):
     import config
-
     GROQ_API_KEY = config.GROQ_API_KEY
     SYSTEM_PROMPT = config.SYSTEM_PROMPT
 
 FAISS_INDEX_PATH = "faiss_index"
 
-
-def load_or_build_index():
-    """Load FAISS index if exists, else build from documents."""
+def load_and_build_index():
     if os.path.exists(FAISS_INDEX_PATH):
         embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
         return FAISS.load_local(FAISS_INDEX_PATH, embeddings, allow_dangerous_deserialization=True)
-
-    # Build index
-    docs_path = os.path.join(os.path.dirname(__file__), "documents")
-    all_pages = []
-    for filename in os.listdir(docs_path):
-        file_path = os.path.join(docs_path, filename)
-        if filename.endswith(".pdf"):
-            loader = PyPDFLoader(file_path)
-        elif filename.endswith(".txt"):
-            loader = TextLoader(file_path, encoding="utf-8")
-        else:
-            continue
-        pages = loader.load()
-        all_pages.extend(pages)
-
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=200)
-    texts = text_splitter.split_documents(all_pages)
-
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    vector_store = FAISS.from_documents(texts, embeddings)
-    vector_store.save_local(FAISS_INDEX_PATH)
-    return vector_store
-
-
-# Initialize Groq client
-client = Client(api_key=GROQ_API_KEY)
-
-
-def query_groq(messages):
-    """
-    Send messages to Groq LLM. Messages = list of {"role": "user"/"assistant"/"system", "content": str}.
-    Returns: assistant response string
-    """
-    formatted_messages = []
-    for msg in messages:
-        role = msg["role"]
-        content = msg["content"]
-        formatted_messages.append({"role": role, "content": content})
-
-    response = client.chat(
-        model="llama-3.1-8b-instant",
-        messages=formatted_messages
-    )
-    return response["choices"][0]["message"]["content"]
+    else:
+        docs_path = os.path.join(os.path.dirname(__file__), 'documents')
+        all_pages = []
+        for filename in os.listdir(docs_path):
+            file_path = os.path.join(docs_path, filename)
+            if filename.endswith(('.pdf', '.txt')):
+                loader = TextLoader(file_path, encoding='utf-8') if filename.endswith('.txt') else PyPDFLoader(
+                    file_path)
+                pages = loader.load()
+                all_pages.extend(pages)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=200)
+        texts = text_splitter.split_documents(all_pages)
+        embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+        vector_store = FAISS.from_documents(texts, embeddings)
+        vector_store.save_local(FAISS_INDEX_PATH)
+        return vector_store
 
 
 def get_qa_chain():
-    """
-    Returns a function that can be called as:
-    response = qa_chain(user_query, chat_history)
-    """
-    vector_store = load_or_build_index()
+    vector_store = load_and_build_index()
+    retriever = vector_store.as_retriever(search_kwargs={"k": 5})
+    llm = ChatGroq(model_name="llama-3.1-8b-instant", groq_api_key=GROQ_API_KEY)
 
-    def qa_chain(user_query, chat_history):
-        # Keep last 5 turns
-        recent_history = chat_history[-5:]
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    contextualize_q_system_prompt = """Given a chat history and the latest user question \
+       which might reference context in the chat history, formulate a standalone question \
+       which can be understood without the chat history. Do NOT answer the question, \
+       just reformulate it if needed and otherwise return it as is."""
+    contextualize_q_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", contextualize_q_system_prompt),
+            ("placeholder", "{chat_history}"),
+            ("human", "{input}"),
+        ]
+    )
+    history_aware_retriever = create_history_aware_retriever(llm, retriever, contextualize_q_prompt)
 
-        # Add recent conversation
-        for msg in recent_history:
-            messages.append({"role": msg["role"], "content": msg["content"]})
+    qa_system_prompt = SYSTEM_PROMPT + "\n\nCONTEXT:\n{context}"
+    qa_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", qa_system_prompt),
+            ("placeholder", "{chat_history}"),
+            ("human", "{input}"),
+        ]
+    )
 
-        # Retrieve relevant docs from FAISS
-        retriever = vector_store.as_retriever(search_kwargs={"k": 5})
-        retrieved_docs = retriever.get_relevant_documents(user_query)
-        context_text = "\n\n".join([doc.page_content for doc in retrieved_docs])
-        messages.append({"role": "assistant", "content": f"Context:\n{context_text}"})
+    question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
 
-        # Add user question
-        messages.append({"role": "user", "content": user_query})
+    rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
 
-        # Query Groq
-        answer = query_groq(messages)
-        return answer
-
-    return qa_chain
+    return rag_chain

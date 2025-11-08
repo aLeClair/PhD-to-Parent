@@ -4,6 +4,30 @@ from langchain_core.messages import HumanMessage, AIMessage
 
 st.title("Andrew's Research Sherpa 🏔️")
 
+# --- NEW: Custom CSS for Chat Bubbles ---
+css = """
+<style>
+    /* General message container */
+    .st-emotion-cache-1c7y2kd {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+
+    /* Assistant (AI) bubble */
+    [data-testid="chat-message-container"]:has(div[data-testid="stChatMessageContent-assistant"]) {
+        background-color: #f0f2f6; /* A light grey for the AI's bubble */
+    }
+
+    /* User bubble - you can customize the color */
+    [data-testid="chat-message-container"]:has(div[data-testid="stChatMessageContent-user"]) {
+        background-color: #dcf8c6; /* A light green, similar to WhatsApp */
+    }
+</style>
+"""
+st.markdown(css, unsafe_allow_html=True)
+
 def handle_chat_turn(prompt):
     """
     Adds the user's prompt to the history, gets the AI's response,
@@ -20,6 +44,7 @@ def handle_chat_turn(prompt):
         })
         # Add AI response to history
         st.session_state.chat_history.append(AIMessage(content=response["answer"]))
+    st.rerun()
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
@@ -37,11 +62,6 @@ if len(st.session_state.chat_history) == 0:
         AIMessage(
             content="Hey there! I'm Andrew's Research Sherpa—your guide through the 'mountain' of his academic work. I've read all his papers so you don't have to. What are you curious about first?")
     )
-
-    # Display the full chat history (which is just the greeting at this point)
-    for message in st.session_state.chat_history:
-        with st.chat_message("assistant"):
-            st.markdown(message.content)
 
     st.markdown(
         "From my research mountaineering, I find these to be great starting points, but if you're curious about something else, feel free to ask in the chat box below!")
@@ -61,14 +81,11 @@ if len(st.session_state.chat_history) == 0:
             handle_chat_turn("Show me a real-world example of his work.")
             st.rerun()
 
-else:  # If the conversation has already started, just display the full history
-    for message in st.session_state.chat_history:
-        if isinstance(message, AIMessage):
-            with st.chat_message("assistant"):
-                st.markdown(message.content)
-        elif isinstance(message, HumanMessage):
-            with st.chat_message("user"):
-                st.markdown(message.content)
+# Display the full chat history (which is just the greeting at this point)
+for message in st.session_state.chat_history:
+    with st.chat_message("assistant"):
+        st.markdown(message.content)
+
 
 # --- The regular chat input box ---
 if prompt := st.chat_input("Ask a follow-up question..."):

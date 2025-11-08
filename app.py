@@ -43,7 +43,10 @@ if len(st.session_state.chat_history) == 0:
         with st.chat_message("assistant"):
             st.markdown(message.content)
 
-    # --- NEW: Create columns for the suggested question buttons ---
+    st.markdown(
+        "From my research mountaineering, I find these to be great starting points, but if you're curious about something else, feel free to ask in the chat box below!")
+
+    # Create columns for the suggested question buttons
     col1, col2, col3 = st.columns(3)
     with col1:
         if st.button("What does Andrew do, in simple terms?"):

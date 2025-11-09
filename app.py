@@ -113,19 +113,3 @@ colC.download_button(
     file_name="chat_with_the_sherpa.txt",
     mime="text/plain"
 )
-
-# --- Modal Logic ---
-# This uses a simple session state flag instead of the modal object for more control
-if "open_modal" not in st.session_state:
-    st.session_state.open_modal = False
-
-if st.session_state.open_modal:
-    with st.container():
-        st.markdown('<div class="modal-overlay"></div>', unsafe_allow_html=True)
-        with st.expander("Sherpa's Field Notes 📝", expanded=True):
-            st.info("What's an 'ontology'? ...")
-            st.info("What's 'time-series data'? ...")
-            st.info("Why is this math so complex? ...")
-            if st.button("Close Notes"):
-                st.session_state.open_modal = False
-                st.rerun()

@@ -66,9 +66,12 @@ if not st.session_state.chat_history:
 else:
     # If the conversation has started, display the full history
     for message in st.session_state.chat_history:
-        with st.chat_message("assistant" if isinstance(message, AIMessage) else "user",
-                             avatar="assistant" if isinstance(message, AIMessage) else "assistant"):
-            st.markdown(message.content)
+        if isinstance(message, AIMessage):
+            with st.chat_message("assistant", avatar="assistant"):
+                st.markdown(message.content)
+        elif isinstance(message, HumanMessage):
+            with st.chat_message("user", avatar="user"):
+                st.markdown(message.content)
 
     # Check if the last message was from the user and needs a response
     if isinstance(st.session_state.chat_history[-1], HumanMessage):
@@ -118,7 +121,6 @@ if "open_modal" not in st.session_state:
 
 if st.session_state.open_modal:
     with st.container():
-        # This is a trick to create a modal-like overlay
         st.markdown('<div class="modal-overlay"></div>', unsafe_allow_html=True)
         with st.expander("Sherpa's Field Notes 📝", expanded=True):
             st.info("What's an 'ontology'? ...")

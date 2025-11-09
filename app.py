@@ -47,7 +47,7 @@ if "chain" not in st.session_state:
 
 # Display the greeting and suggested questions ONLY if the conversation is new.
 if not st.session_state.chat_history:
-    st.chat_message("assistant", avatar=" Yeti").markdown(
+    st.chat_message("assistant", avatar="🚶").markdown(
         "Hey there! I'm Andrew's Research Sherpa—your guide through the 'mountain' of his academic work. I've read all his papers so you don't have to. What are you curious about first?"
     )
     st.markdown(

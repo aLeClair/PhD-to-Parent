@@ -92,14 +92,10 @@ if prompt := st.chat_input("Ask a follow-up, or your own question..."):
 # --- Footer with Action Buttons and Modal ---
 st.divider()
 
-colA, colB, colC = st.columns(3)
-
-# Button to open the Field Notes modal
-if colA.button("📝 Sherpa's Field Notes"):
-    st.session_state.open_modal = True
+colA, colB = st.columns(2)
 
 # Jargon Avalanche Button
-if colB.button("🚨 I'm lost in a Jargon Avalanche!"):
+if colA.button("🚨 I'm lost in a Jargon Avalanche!"):
     jargon_prompt = "Hey Sherpa, I think I'm getting lost. Can you explain your last point again in the simplest possible terms?"
     st.session_state.chat_history.append(HumanMessage(content=jargon_prompt))
     st.rerun()
@@ -107,7 +103,7 @@ if colB.button("🚨 I'm lost in a Jargon Avalanche!"):
 # Export Conversation Button
 history_str = "\n".join([f"{'User' if isinstance(msg, HumanMessage) else 'Sherpa'}: {msg.content}" for msg in
                          st.session_state.chat_history])
-colC.download_button(
+colB.download_button(
     label="📥 Export Conversation",
     data=history_str,
     file_name="chat_with_the_sherpa.txt",

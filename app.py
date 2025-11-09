@@ -6,7 +6,6 @@ from langchain_core.messages import HumanMessage, AIMessage
 
 st.title("Andrew's Research Sherpa 🏔️")
 
-# --- Custom CSS for Chat Bubbles ---
 css = """
 <style>
     .st-emotion-cache-1c7y2kd {
@@ -23,7 +22,22 @@ css = """
 """
 st.markdown(css, unsafe_allow_html=True)
 
-# --- Main App Logic ---
+with st.sidebar:
+    st.header("Sherpa's Field Notes 📝")
+    with st.expander("What's an 'ontology'?"):
+        st.info("The term 'ontology' comes from a branch of philosophy that studies the nature of being and existence. Andrew applies these ancient ideas to help modern AI understand the world!")
+    with st.expander("What's 'time-series data'?"):
+        st.info("This is just a fancy way of saying 'a long list of measurements taken over time,' like a stock ticker, a heart rate monitor, or the sensor readings from a factory machine.")
+    with st.expander("Why is this math so complex?"):
+        st.info("""
+        Human language is beautifully messy, but for a computer, that messiness is just confusing. Andrew's work brings clarity by using two powerful tools: **Formal Logic** and **Mathematics**.
+
+        **1. Formal Logic:** Think of this as the *grammar* for reasoning. Andrew uses specific types of logic, like **First-Order Logic** or **Boolean Algebra** (where things are just true or false), to write crystal-clear, unambiguous rules that a computer can follow perfectly. It's how he teaches the AI that if "Andrew works for GENAIZ" and "GENAIZ is in Montreal," then the AI can definitively conclude "Andrew works in Montreal."
+
+        **2. Mathematics (like Algebra):** This is the *language* used to express these logical rules. Just like high school algebra uses 'x' and 'y' to represent unknown numbers, Andrew's research uses abstract algebra to represent concepts. This allows him to create a powerful "algebra for ideas," where he can manipulate and combine concepts with mathematical precision to discover new facts.
+
+        Together, logic provides the structure, and math provides the language, to turn messy human knowledge into a perfect system the AI can understand.
+        """)
 
 # Initialize Session State
 if "chat_history" not in st.session_state:
@@ -80,3 +94,22 @@ else:
 if prompt := st.chat_input("Ask a follow-up, or your own question..."):
     st.session_state.chat_history.append(HumanMessage(content=prompt))
     st.rerun()
+
+st.divider() # Adds a nice visual separator
+col1, col2 = st.columns([1, 1]) # Create two columns for the buttons
+
+with col1:
+    if st.button("🚨 I'm lost in a Jargon Avalanche!"):
+        jargon_prompt = "Hey Sherpa, I think I'm getting lost in a jargon avalanche. Can you explain your last point again in the simplest possible terms, maybe with a different analogy?"
+        st.session_state.chat_history.append(HumanMessage(content=jargon_prompt))
+        st.rerun()
+
+with col2:
+    chat_history_str = "\n".join([f"{'User' if isinstance(msg, HumanMessage) else 'Sherpa'}: {msg.content}" for msg in
+                                  st.session_state.chat_history])
+    st.download_button(
+        label="📥 Export Conversation",
+        data=chat_history_str,
+        file_name="chat_with_the_sherpa.txt",
+        mime="text/plain"
+    )

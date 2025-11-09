@@ -67,12 +67,12 @@ else:
     # If the conversation has started, display the full history
     for message in st.session_state.chat_history:
         with st.chat_message("assistant" if isinstance(message, AIMessage) else "user",
-                             avatar=" Yeti" if isinstance(message, AIMessage) else "🚶"):
+                             avatar="🚶" if isinstance(message, AIMessage) else "🚶"):
             st.markdown(message.content)
 
     # Check if the last message was from the user and needs a response
     if isinstance(st.session_state.chat_history[-1], HumanMessage):
-        with st.chat_message("assistant", avatar=" Yeti"):
+        with st.chat_message("assistant", avatar="🚶"):
             with st.spinner("The Sherpa is thinking..."):
                 response = st.session_state.chain.invoke({
                     "input": st.session_state.chat_history[-1].content,
